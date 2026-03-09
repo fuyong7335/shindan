@@ -1,0 +1,421 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>他人軸診断</title>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      font-family: "Hiragino Kaku Gothic ProN", "Hiragino Sans", Meiryo, sans-serif;
+      background-color: #fbf5f7;
+      min-height: 100vh;
+      padding: 20px;
+      line-height: 1.8;
+      color: #444;
+    }
+    .container { max-width: 520px; margin: 0 auto; }
+    h1 {
+      font-size: 1.4rem;
+      color: #b07fa0;
+      margin-bottom: 6px;
+      text-align: center;
+    }
+    .sub {
+      font-size: 0.85rem;
+      color: #aaa;
+      text-align: center;
+      margin-bottom: 24px;
+    }
+    .card {
+      background: #fff;
+      border-radius: 16px;
+      box-shadow: 0 4px 20px rgba(0,0,0,0.06);
+      padding: 28px 24px;
+      margin-bottom: 20px;
+    }
+
+    /* ページ管理 */
+    .page { display: none; }
+    .page.active { display: block; }
+
+    /* トップページ */
+    .top-desc {
+      font-size: 0.95rem;
+      color: #666;
+      line-height: 2;
+      margin-bottom: 24px;
+      white-space: pre-line;
+    }
+    .btn-start {
+      display: block;
+      width: 100%;
+      padding: 14px;
+      background: #f2c6d0;
+      border: none;
+      border-radius: 999px;
+      font-size: 1rem;
+      color: #7a4a5a;
+      cursor: pointer;
+      font-family: inherit;
+      transition: background 0.2s;
+    }
+    .btn-start:hover { background: #e8afc0; }
+
+    /* 質問フォーム */
+    .q-block { margin-bottom: 24px; }
+    .q-text {
+      font-size: 0.95rem;
+      color: #555;
+      margin-bottom: 12px;
+      line-height: 1.7;
+    }
+    .q-num {
+      font-size: 0.8rem;
+      color: #c8a0b8;
+      margin-bottom: 4px;
+    }
+    .options { display: flex; flex-direction: column; gap: 8px; }
+    .option-label {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 10px 14px;
+      border-radius: 10px;
+      border: 1.5px solid #f0e0ea;
+      cursor: pointer;
+      font-size: 0.9rem;
+      color: #555;
+      transition: background 0.15s, border-color 0.15s;
+    }
+    .option-label:hover { background: #fdf0f5; }
+    .option-label input[type="radio"] { display: none; }
+    .option-label.selected {
+      background: #fde8f0;
+      border-color: #f2c6d0;
+      color: #7a4a5a;
+      font-weight: bold;
+    }
+    .radio-dot {
+      width: 16px; height: 16px;
+      border-radius: 50%;
+      border: 2px solid #e0b0c8;
+      flex-shrink: 0;
+      display: flex; align-items: center; justify-content: center;
+    }
+    .option-label.selected .radio-dot {
+      border-color: #d080a0;
+      background: #d080a0;
+    }
+    .radio-dot::after {
+      content: '';
+      width: 6px; height: 6px;
+      border-radius: 50%;
+      background: #fff;
+      display: none;
+    }
+    .option-label.selected .radio-dot::after { display: block; }
+
+    .btn-submit {
+      display: block;
+      width: 100%;
+      padding: 14px;
+      background: #f2c6d0;
+      border: none;
+      border-radius: 999px;
+      font-size: 1rem;
+      color: #7a4a5a;
+      cursor: pointer;
+      font-family: inherit;
+      margin-top: 8px;
+      transition: background 0.2s;
+    }
+    .btn-submit:hover { background: #e8afc0; }
+    .btn-submit:disabled { background: #e8d8e0; color: #bbb; cursor: not-allowed; }
+
+    /* 結果ページ */
+    .result-message {
+      font-size: 0.95rem;
+      color: #555;
+      line-height: 2.1;
+      white-space: pre-line;
+      margin-bottom: 24px;
+    }
+    .common-end {
+      font-size: 0.9rem;
+      color: #888;
+      line-height: 2;
+      white-space: pre-line;
+      border-top: 1px solid #f0e0ea;
+      padding-top: 20px;
+      margin-bottom: 24px;
+    }
+
+    /* ワーク誘導 */
+    .work-invite {
+      background: #fff8fb;
+      border: 1.5px solid #f2c6d0;
+      border-radius: 14px;
+      padding: 20px;
+      margin-bottom: 20px;
+      text-align: center;
+    }
+    .work-invite p {
+      font-size: 0.88rem;
+      color: #888;
+      margin-bottom: 16px;
+      line-height: 1.8;
+    }
+    .btn-line {
+      display: inline-block;
+      background: #06C755;
+      color: #fff;
+      border: none;
+      border-radius: 999px;
+      padding: 12px 28px;
+      font-size: 0.95rem;
+      font-family: inherit;
+      cursor: pointer;
+      text-decoration: none;
+      transition: background 0.2s;
+      margin-bottom: 16px;
+    }
+    .btn-line:hover { background: #05b34c; }
+    .qr-wrap { margin-top: 8px; }
+    .qr-wrap img {
+      width: 120px;
+      height: 120px;
+      border-radius: 8px;
+    }
+    .qr-note {
+      font-size: 0.78rem;
+      color: #bbb;
+      margin-top: 6px;
+    }
+
+    /* コメント欄 */
+    .comment-section { margin-top: 8px; }
+    .comment-hint {
+      font-size: 0.85rem;
+      color: #aaa;
+      line-height: 1.8;
+      margin-bottom: 10px;
+    }
+    textarea {
+      width: 100%;
+      border: 1.5px solid #f0e0ea;
+      border-radius: 10px;
+      padding: 12px;
+      font-family: inherit;
+      font-size: 0.9rem;
+      color: #555;
+      resize: vertical;
+      min-height: 80px;
+      outline: none;
+      transition: border-color 0.2s;
+    }
+    textarea:focus { border-color: #f2c6d0; }
+    .btn-send {
+      margin-top: 10px;
+      background: none;
+      border: 1px solid #e0c0d0;
+      border-radius: 999px;
+      padding: 8px 20px;
+      font-size: 0.85rem;
+      color: #b08090;
+      cursor: pointer;
+      font-family: inherit;
+      transition: background 0.2s;
+    }
+    .btn-send:hover { background: #fdf0f5; }
+    .sent-msg {
+      font-size: 0.85rem;
+      color: #c8a0b8;
+      margin-top: 8px;
+      display: none;
+    }
+
+    .btn-retry {
+      display: block;
+      width: 100%;
+      padding: 12px;
+      background: none;
+      border: 1.5px solid #f0e0ea;
+      border-radius: 999px;
+      font-size: 0.9rem;
+      color: #c8a0b8;
+      cursor: pointer;
+      font-family: inherit;
+      margin-top: 8px;
+      transition: background 0.2s;
+    }
+    .btn-retry:hover { background: #fdf0f5; }
+  </style>
+</head>
+<body>
+<div class="container">
+
+  <!-- トップページ -->
+  <div class="page active" id="page-top">
+    <h1>他人軸診断</h1>
+    <p class="sub">あなたの「生きづらさのパターン」を知る10問</p>
+    <div class="card">
+      <p class="top-desc">誰かの顔色を気にしながら、
+うまく断れなくて、
+自分の気持ちがわからなくなる。
+
+そんな経験、ありませんか？
+
+10問の質問に答えると、
+今のあなたの状態をお伝えします。</p>
+      <button class="btn-start" onclick="showPage('page-form')">診断をはじめる</button>
+    </div>
+  </div>
+
+  <!-- 質問フォーム -->
+  <div class="page" id="page-form">
+    <h1>他人軸診断</h1>
+    <p class="sub">あてはまるものを選んでください</p>
+    <div class="card" id="form-card">
+      <!-- 質問はJSで生成 -->
+    </div>
+  </div>
+
+  <!-- 結果ページ -->
+  <div class="page" id="page-result">
+    <h1>診断結果</h1>
+    <div class="card">
+      <div class="result-message" id="result-message"></div>
+      <div class="common-end" id="common-end"></div>
+
+      <!-- LINE誘導 -->
+      <div class="work-invite">
+        <p>自分の気持ちを思い出すための<br>小さなワークを用意しました。<br>よければ受け取ってください。</p>
+        <a href="https://lin.ee/UGnufAs" target="_blank" class="btn-line">📩 LINEで受け取る</a>
+
+      </div>
+
+      <!-- コメント欄 -->
+      <div class="comment-section">
+        <p class="comment-hint">もし何か浮かんだら、ここに置いていってください。<br>書かなくても、大丈夫です。</p>
+        <textarea id="commentText" placeholder=""></textarea>
+        <button class="btn-send" onclick="submitComment()">そっと置いていく</button>
+        <p class="sent-msg" id="sentMsg">受け取りました</p>
+      </div>
+    </div>
+    <button class="btn-retry" onclick="retry()">もう一度診断する</button>
+  </div>
+
+</div>
+
+<script>
+var questions = [
+  "人からどう思われるかを、つい気にしてしまう。",
+  "何かを決めるとき、自分の気持ちより相手の気持ちを優先しがちだ。",
+  "頼まれると断れないことが多い。",
+  "モヤモヤや違和感を感じても、「気のせいかな」と無視することがある。",
+  "誰かに迷惑をかけることが怖い。",
+  "「ちゃんとしなきゃ」「がんばらなきゃ」と思いすぎて疲れる。",
+  "本当はどうしたいのか、自分の気持ちが分からなくなる時がある。",
+  "人から嫌われたくない気持ちが強い。",
+  "相手に合わせすぎて、自分の意見を言えないことがある。",
+  "感情が揺れたときに、「これって私が悪いのかな」と思いやすい。"
+];
+
+var choices = [
+  { label: "あてはまらない", value: 0 },
+  { label: "少しあてはまる", value: 1 },
+  { label: "あてはまる", value: 2 },
+  { label: "とてもあてはまる", value: 3 }
+];
+
+var answers = new Array(questions.length).fill(null);
+var currentScore = 0;
+
+var messages = {
+  light: "今のあなたは、\n周りをよく見ながら、\nその中でどう振る舞えばいいかを、\nずっと考えてきた人なのかもしれません。\n\n大きく迷っているわけではないけれど、\n気づくと「自分はどうしたいんだっけ」と\n立ち止まる瞬間がある。\n\nそれは、弱さではありません。\n人との関係を大切にしてきた証です。\n\nもし最近、\n「大丈夫」と言ったあとに\n少しだけ疲れが残ることがあったなら、\n今日はその感覚を否定しなくて大丈夫です。\n\n答えは、今は要りません。\nここまで読めたら、それで十分です。",
+  middle: "今のあなたは、\n自分の気持ちより先に相手の反応を考えてしまい、\n動き出しが遅れることがあるのかもしれません。\n\nちゃんと考えている。\nちゃんと気を遣っている。\nでも、その分、\n自分の感覚が後回しになっている。\n\n「どうしたいのかわからない」\nその言葉が浮かぶとしたら、\nそれは考えていないからではなく、\n感じる余白がなかっただけです。\n\n無理に答えを出さなくていい。\n今日は、\n「何か引っかかった」という事実だけを\n持ち帰ってください。",
+  strong: "今のあなたは、\n自分の気持ちよりも、\n場の空気や誰かの期待を優先することが、\n当たり前になっているのかもしれません。\n\nそれは、\nあなたが甘いからでも、弱いからでもありません。\nそうしないと生きられない時間を、\nちゃんと乗り越えてきた人だからです。\n\n本当は断りたかった。\n本当は嫌だった。\nそんな記憶に、\nふたをしてきたことがあるなら――\nそれも、あなたなりの選択でした。\n\n今日は、\n「私は何も間違っていなかったかもしれない」\nその可能性だけ、\nそっと置いていってください。\n\n言葉が出なくても、大丈夫です。"
+};
+
+var commonEnd = "ここまで読んで、\nもし少しでも\n「私のことかもしれない」\nそう感じたなら。\n\n無理に答えを出す必要はありません。\n\nただ、\n自分の気持ちを思い出すための\n小さなワークを用意しました。\n\n5分ほどで終わります。\nよければ受け取ってください。";
+
+function buildForm() {
+  var card = document.getElementById('form-card');
+  var html = '';
+  questions.forEach(function(q, i) {
+    html += '<div class="q-block">';
+    html += '<div class="q-num">Q' + (i+1) + '</div>';
+    html += '<div class="q-text">' + q + '</div>';
+    html += '<div class="options">';
+    choices.forEach(function(c) {
+      html += '<label class="option-label" onclick="selectOption(this,' + i + ',' + c.value + ')">';
+      html += '<input type="radio" name="q' + i + '" value="' + c.value + '">';
+      html += '<span class="radio-dot"></span>';
+      html += c.label;
+      html += '</label>';
+    });
+    html += '</div></div>';
+  });
+  html += '<button class="btn-submit" id="submitBtn" onclick="calcResult()" disabled>結果を見る</button>';
+  card.innerHTML = html;
+}
+
+function selectOption(el, qIdx, val) {
+  var opts = el.parentNode.querySelectorAll('.option-label');
+  opts.forEach(function(o) { o.classList.remove('selected'); });
+  el.classList.add('selected');
+  answers[qIdx] = val;
+  checkAllAnswered();
+}
+
+function checkAllAnswered() {
+  var allDone = answers.every(function(a) { return a !== null; });
+  document.getElementById('submitBtn').disabled = !allDone;
+}
+
+function calcResult() {
+  var score = answers.reduce(function(sum, v) { return sum + v; }, 0);
+  currentScore = score;
+  var pattern = score <= 13 ? 'light' : score <= 21 ? 'middle' : 'strong';
+  document.getElementById('result-message').textContent = messages[pattern];
+  document.getElementById('common-end').textContent = commonEnd;
+  showPage('page-result');
+  window.scrollTo(0, 0);
+}
+
+function showPage(id) {
+  document.querySelectorAll('.page').forEach(function(p) { p.classList.remove('active'); });
+  document.getElementById(id).classList.add('active');
+  if (id === 'page-form') buildForm();
+  window.scrollTo(0, 0);
+}
+
+function submitComment() {
+  var comment = document.getElementById('commentText').value.trim();
+  var formId = '1FAIpQLSf_kOH4vEh5leCQpE5Zk9uGfywn3TZm6DN74_OVKw0fnlyvDA';
+  var entryScore = 'entry.1739309525';
+  var entryComment = 'entry.321472165';
+  var url = 'https://docs.google.com/forms/u/0/d/e/' + formId + '/formResponse';
+  var body = entryScore + '=' + encodeURIComponent(currentScore) + '&' + entryComment + '=' + encodeURIComponent(comment);
+  fetch(url, {
+    method: 'POST',
+    mode: 'no-cors',
+    headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+    body: body
+  }).catch(function() {});
+  document.getElementById('sentMsg').style.display = 'block';
+  document.querySelector('.btn-send').style.display = 'none';
+}
+
+function retry() {
+  answers = new Array(questions.length).fill(null);
+  currentScore = 0;
+  document.getElementById('commentText').value = '';
+  document.getElementById('sentMsg').style.display = 'none';
+  document.querySelector('.btn-send').style.display = 'inline-block';
+  showPage('page-top');
+}
+</script>
+</body>
+</html>
